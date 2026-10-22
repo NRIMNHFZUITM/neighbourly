@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Neighbourly video scenes</title>
+<style>
+  @font-face {
+    font-family: "Jakarta";
+    src: url("../../node_modules/@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2") format("woff2");
+    font-weight: 200 800;
+  }
+  :root {
+    --red: #d71920; --red2: #e53032; --red-dark: #8f1418; --yellow: #f6a909; --ink: #121212;
+    --grey: #737373; --line: #e5e5e5; --soft: #fafafa;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  body { font-family: "Jakarta", "Segoe UI", sans-serif; color: var(--ink); background: #fff; -webkit-font-smoothing: antialiased; }
+  .stage { position: absolute; inset: 0; overflow: hidden; }
+  .dark { background: radial-gradient(circle at 78% 18%, rgba(215,25,32,.28), transparent 42%), radial-gradient(circle at 12% 90%, rgba(246,169,9,.12), transparent 38%), #121212; color: #fff; }
+  .light { background: radial-gradient(circle at 85% 10%, rgba(246,169,9,.18), transparent 40%), radial-gradient(circle at 8% 85%, rgba(215,25,32,.12), transparent 40%), #fafafa; }
+  .abs { position: absolute; }
+  .chip { position: absolute; left: 96px; top: 72px; display: flex; align-items: center; gap: 14px; font-size: 24px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .chip b { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--red); color: #fff; font-size: 20px; letter-spacing: 0; }
+  .dark .chip { color: #fca5a5; }
+  .light .chip { color: var(--red); }
+  h1.head { position: absolute; left: 96px; top: 150px; font-size: 76px; line-height: 1.05; font-weight: 800; letter-spacing: -.02em; max-width: 1720px; }
+  .caption { position: absolute; left: 50%; bottom: 54px; transform: translateX(-50%); max-width: 1560px; width: max-content; padding: 18px 34px;
+    border-radius: 22px; font-size: 31px; line-height: 1.38; font-weight: 500; text-align: center; }
+  .dark .caption { background: rgba(255,255,255,.08); color: #f5f5f5; backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,.12); }
+  .light .caption { background: rgba(18,18,18,.88); color: #fff; }
+  .card { background: #fff; border-radius: 28px; box-shadow: 0 24px 60px -24px rgba(18,18,18,.35); color: var(--ink); }
+  .dark .card { background: #1d1d1d; border: 1px solid rgba(255,255,255,.1); color: #fff; box-shadow: 0 30px 80px -30px rgba(0,0,0,.8); }
+  .emoji { font-family: "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+  .muted { color: var(--grey); }
+  .dark .muted { color: #a3a3a3; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+/* ------------------------------------------------------------ helpers */
+const LOGO = (size) => `<svg width="${size}" height="${size}" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#d71920"/><path d="M14 33 32 18l18 15v15a3 3 0 0 1-3 3H17a3 3 0 0 1-3-3Z" fill="#fff"/><path d="M32 47c-6.5 0-10-4.6-10-9.6 0-6.4 6.3-9.9 15.8-10.4-.4 9.6-1.6 20-5.8 20Z" fill="#f6a909"/><path d="M26 44c2.5-4.5 6-8 10-10.5" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg>`;
+const EASE = "cubic-bezier(.16,1,.3,1)";
+const POP = "cubic-bezier(.34,1.56,.64,1)";
+function el(html, style = "", parent) {
+  const t = document.createElement("template");
+  t.innerHTML = html.trim();
+  const node = t.content.firstElementChild;
+  if (style) node.style.cssText += style;
+  (parent || document.querySelector(".stage")).appendChild(node);
+  return node;
+}
+/** Animate `node` with keyframes, starting `at` seconds into the scene. Holds the first frame until then. */
+function anim(node, keyframes, at, dur = 0.7, easing = EASE) {
+  return node.animate(keyframes, { delay: at * 1000, duration: dur * 1000, easing, fill: "both" });
+}
+const fadeUp = (n, at, d = 0.7, dy = 40) => anim(n, [{ opacity: 0, transform: `translateY(${dy}px)` }, { opacity: 1, transform: "none" }], at, d);
+const popIn = (n, at, d = 0.6) => anim(n, [{ opacity: 0, transform: "scale(.4)" }, { opacity: 1, transform: "scale(1)" }], at, d, POP);
+const fadeIn = (n, at, d = 0.6) => anim(n, [{ opacity: 0 }, { opacity: 1 }], at, d);
+const fadeOut = (n, at, d = 0.5) => n.animate([{ opacity: 1 }, { opacity: 0 }], { delay: at * 1000, duration: d * 1000, fill: "forwards" });
+const COUNTERS = [];
+function counter(node, from, to, at, dur, fmt = (v) => Math.round(v).toLocaleString("en-MY")) {
+  node.textContent = fmt(from);
+  COUNTERS.push({ node, from, to, at, dur, fmt });
+}
+function updateCounters(t) {
+  for (const c of COUNTERS) {
+    const x = Math.min(1, Math.max(0, (t - c.at) / c.dur));
+    c.node.textContent = c.fmt(c.from + (c.to - c.from) * (1 - Math.pow(1 - x, 3)));
+  }
+}
+function stage(kind, chip) {
+  document.getElementById("root").innerHTML = `<div class="stage ${kind}"></div>`;
+  if (chip) el(`<div class="chip"><b>${chip[0]}</b>${chip[1]}</div>`);
+}
+function caption(text, at = 0.15) {
+  if (!text) return;
+  fadeIn(el(`<div class="caption">${text}</div>`), at, 0.5);
+}
+function head(html, at = 0.1, style = "") {
+  const h = el(`<h1 class="head">${html}</h1>`, style);
+  fadeUp(h, at, 0.8);
+  return h;
+}
+
+/* ------------------------------------------------------------ scenes */
+const SCENES = {
+  intro({ D }) {
+    stage("light");
+    const ring = el(`<div class="abs" style="left:50%;top:44%;width:1400px;height:1400px;margin:-700px 0 0 -700px;border-radius:50%;background:radial-gradient(circle,rgba(215,25,32,.10),transparent 60%)"></div>`);
+    fadeIn(ring, 0, 1.5);
+    const logo = el(`<div class="abs" style="left:50%;top:300px;margin-left:-90px">${LOGO(180)}</div>`);
+    anim(logo, [{ opacity: 0, transform: "scale(.2) rotate(-12deg)" }, { opacity: 1, transform: "scale(1) rotate(0)" }], 0.15, 0.9, POP);
+    const word = el(`<div class="abs" style="left:0;right:0;top:510px;text-align:center;font-size:120px;font-weight:800;letter-spacing:-.03em">Neighbourly</div>`);
+    fadeUp(word, 0.7, 0.9);
+    const tag = el(`<div class="abs muted" style="left:0;right:0;top:665px;text-align:center;font-size:40px;font-weight:500">A smarter, safer and greener <span style="color:var(--red);font-weight:700">City of Elmina</span></div>`);
+    fadeUp(tag, 1.3, 0.8);
+    const meta = el(`<div class="abs" style="left:0;right:0;top:800px;text-align:center"><span style="display:inline-flex;gap:14px;align-items:center;padding:14px 26px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:24px;font-weight:600;color:#525252">
+      <span style="width:10px;height:10px;border-radius:50%;background:var(--yellow)"></span>Sime Darby Property University Hackathon 2026 · People track</span></div>`);
+    fadeUp(meta, 2.0, 0.8);
+  },
+
+  p1({ A, text }) {
+    stage("dark", ["01", "The problem"]);
+    head(`City of Elmina is growing.<br><span style="color:#fca5a5">So are the frustrations.</span>`, 0.2);
+    const svg = el(`<svg class="abs" style="left:0;bottom:170px" width="1920" height="420" viewBox="0 0 1920 420"></svg>`);
+    const homes = [];
+    for (let i = 0; i < 15; i++) {
+      const w = 110, h = 140 + ((i * 53) % 5) * 34, x = 40 + i * 124, y = 420 - h;
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.innerHTML = `<path d="M${x} ${y + 40} L${x + w / 2} ${y} L${x + w} ${y + 40} V420 H${x} Z" fill="#1f1f1f" stroke="#3a3a3a" stroke-width="3"/>` +
+        [0, 1, 2].map((r) => [0, 1].map((c) => `<rect class="win" x="${x + 22 + c * 42}" y="${y + 62 + r * 44}" width="24" height="24" rx="4" fill="#2a2a2a"/>`).join("")).join("");
+      svg.appendChild(g);
+      homes.push(g);
+      anim(g, [{ transform: "translateY(440px)" }, { transform: "none" }], 0.3 + i * 0.07, 0.9);
+    }
+    svg.querySelectorAll(".win").forEach((w, i) => {
+      if (i % 3 === 0) return;
+      w.animate([{ fill: "#2a2a2a" }, { fill: "#f6a909" }], { delay: (1.4 + (i % 17) * 0.09) * 1000, duration: 300, fill: "forwards" });
+    });
+    // A few windows flash red later: trouble in the township.
+    svg.querySelectorAll(".win").forEach((w, i) => {
+      if (i % 7 !== 1) return;
+      w.animate([{ fill: "#f6a909" }, { fill: "#e53032" }], { delay: (A * 0.62 + (i % 5) * 0.1) * 1000, duration: 250, fill: "forwards" });
+    });
+    caption(text);
+  },
+
+  p2({ A, text }) {
+    stage("dark", ["01", "The problem"]);
+    head(`Complaints get lost`, 0.15);
+    const phone = el(`<div class="abs card" style="left:150px;top:290px;width:760px;height:600px;padding:0;overflow:hidden"></div>`);
+    fadeUp(phone, 0.2, 0.7);
+    el(`<div style="display:flex;align-items:center;gap:16px;padding:22px 28px;border-bottom:1px solid rgba(255,255,255,.1);background:#242424">
+        <div class="emoji" style="width:56px;height:56px;border-radius:50%;background:#2f2f2f;display:grid;place-items:center;font-size:30px">🏘️</div>
+        <div><div style="font-size:26px;font-weight:700">Elmina Residents Group</div><div class="muted" style="font-size:19px">412 members</div></div>
+        <div id="badge" style="margin-left:auto;min-width:64px;height:44px;padding:0 14px;border-radius:22px;background:#e53032;display:grid;place-items:center;font-weight:800;font-size:22px">0</div></div>`, "", phone);
+    const list = el(`<div style="padding:18px 26px;display:flex;flex-direction:column;gap:14px"></div>`, "", phone);
+    const msgs = [
+      ["Faridah", "Lampu jalan depan Block C rosak lagi 😩"],
+      ["Kumar", "Big pothole at Persiaran Elmina. Who do we call?"],
+      ["Mei Ling", "Dah call pejabat, no answer…"],
+      ["Ahmad", "Same problem since last month!!"],
+      ["Siti", "Anyone reported the clogged drain?"],
+    ];
+    msgs.forEach(([who, msg], i) => {
+      const b = el(`<div style="align-self:${i % 2 ? "flex-end" : "flex-start"};max-width:540px;padding:12px 18px;border-radius:18px;background:${i % 2 ? "#3a1214" : "#2a2a2a"};font-size:22px">
+        <div style="font-size:16px;font-weight:700;color:${i % 2 ? "#fca5a5" : "#fcd34d"}">${who}</div>${msg}</div>`, "", list);
+      fadeUp(b, A * 0.05 + i * (A * 0.085), 0.45, 20);
+    });
+    counter(document.getElementById("badge"), 0, 99, A * 0.05, A * 0.5, (v) => (v >= 99 ? "99+" : String(Math.round(v))));
+    // Nobody knows the status, and management has no data
+    const status = el(`<div class="abs card" style="left:1010px;top:290px;width:760px;padding:34px 40px">
+      <div class="muted" style="font-size:22px;font-weight:600">Streetlight, Block C</div>
+      <div style="display:flex;align-items:center;gap:22px;margin-top:14px"><div style="font-size:92px;font-weight:800;color:#e53032">?</div>
+      <div><div style="font-size:34px;font-weight:800">Status unknown</div><div class="muted" style="font-size:22px">Reported 6 times. Fixed? Nobody knows.</div></div></div></div>`);
+    fadeUp(status, A * 0.58, 0.7);
+    const mgmt = el(`<div class="abs card" style="left:1010px;top:560px;width:760px;padding:30px 40px">
+      <div class="muted" style="font-size:22px;font-weight:600">Township Management</div>
+      <div style="display:flex;align-items:flex-end;gap:16px;height:150px;margin-top:16px;border-bottom:2px dashed #444">
+      ${[40, 75, 55, 110, 85, 130, 65].map((h) => `<div style="flex:1;height:${h}px;border:2px dashed #4a4a4a;border-bottom:0;border-radius:6px 6px 0 0"></div>`).join("")}</div>
+      <div style="font-size:26px;font-weight:700;margin-top:14px">No data on what's broken, where, or for how long</div></div>`);
+    fadeUp(mgmt, A * 0.76, 0.7);
+    caption(text);
+  },
+
+  p3({ A, text }) {
+    stage("dark", ["01", "The problem"]);
+    head(`Good food goes to waste`, 0.15);
+    const big = el(`<div class="abs" style="left:150px;top:330px"><div style="display:flex;align-items:baseline;gap:22px"><span id="n" style="font-size:210px;font-weight:800;letter-spacing:-.04em;color:#fff;font-variant-numeric:tabular-nums">0</span>
+      <span style="font-size:54px;font-weight:800;color:var(--yellow)">tonnes</span></div>
+      <div style="font-size:40px;font-weight:600;color:#d4d4d4;margin-top:-6px">of food wasted in Malaysia, <span style="color:#fca5a5">every single day</span>*</div>
+      <div class="muted" style="font-size:20px;margin-top:18px">*Estimate by SWCorp, Malaysia's solid waste corporation</div></div>`);
+    fadeUp(big, 0.3, 0.7);
+    counter(document.getElementById("n"), 0, 17000, 0.5, A * 0.55);
+    // Food falls into the bin
+    const bin = el(`<svg class="abs" style="left:1350px;top:560px" width="330" height="330" viewBox="0 0 330 330">
+      <rect x="55" y="70" width="220" height="250" rx="22" fill="#2a2a2a" stroke="#4a4a4a" stroke-width="6"/>
+      <rect x="35" y="40" width="260" height="38" rx="12" fill="#3a3a3a"/><rect x="130" y="18" width="70" height="28" rx="10" fill="#3a3a3a"/>
+      ${[110, 165, 220].map((x) => `<rect x="${x - 6}" y="110" width="12" height="170" rx="6" fill="#3d3d3d"/>`).join("")}</svg>`);
+    fadeIn(bin, 0.4, 0.6);
+    ["🍞", "🍛", "🥭", "🍱", "🥐", "🍌", "🥗", "🍞"].forEach((e, i) => {
+      const f = el(`<div class="abs emoji" style="left:${1430 + (i % 4) * 45}px;top:300px;font-size:72px">${e}</div>`);
+      anim(f, [{ opacity: 0, transform: "translateY(-260px) rotate(-30deg)" }, { opacity: 1, offset: 0.15, transform: "translateY(-200px) rotate(-20deg)" },
+        { opacity: 1, transform: "translateY(290px) rotate(25deg)", offset: 0.9 }, { opacity: 0, transform: "translateY(320px) rotate(30deg)" }],
+        0.6 + i * (A * 0.08), 1.2, "cubic-bezier(.55,0,.85,.4)");
+    });
+    caption(text);
+  },
+
+  p4({ A, text }) {
+    stage("dark", ["01", "The problem"]);
+    head(`Paper forms. Exposed numbers.`, 0.15);
+    const form = el(`<div class="abs card" style="left:150px;top:300px;width:760px;height:540px;padding:40px;background:#f5f0e6;color:#3f3a33;border:none">
+      <div style="font-size:30px;font-weight:800">HALL BOOKING FORM</div><div style="font-size:20px;opacity:.7;margin-top:4px">Submit at the management office, Mon–Fri</div>
+      ${["Name", "Unit no.", "Date", "Time", "Purpose"].map((l) => `<div style="display:flex;gap:16px;align-items:flex-end;margin-top:30px;font-size:22px;font-weight:600">${l}<div style="flex:1;border-bottom:2px dotted #a29a8c;height:24px"></div></div>`).join("")}
+      <div id="stamp" style="position:absolute;right:40px;bottom:60px;transform:rotate(-12deg);border:6px solid #d71920;color:#d71920;font-size:44px;font-weight:900;padding:6px 22px;border-radius:12px">DOUBLE-BOOKED</div>
+      <div id="ring" class="emoji" style="position:absolute;right:46px;top:34px;font-size:70px">📞</div></div>`);
+    fadeUp(form, 0.2, 0.7);
+    const ring = document.getElementById("ring");
+    ring.animate([{ transform: "rotate(-14deg)" }, { transform: "rotate(14deg)" }], { duration: 120, iterations: 18, direction: "alternate", delay: 700 });
+    anim(document.getElementById("stamp"), [{ opacity: 0, transform: "rotate(-12deg) scale(2.4)" }, { opacity: 1, transform: "rotate(-12deg) scale(1)" }], A * 0.3, 0.35, "cubic-bezier(.5,0,.75,0)");
+    const group = el(`<div class="abs card" style="left:1010px;top:300px;width:760px;padding:30px 36px">
+      <div style="font-size:26px;font-weight:700">Group members · 412</div><div id="mem" style="margin-top:14px"></div>
+      <div id="warn" style="margin-top:22px;padding:18px 22px;border-radius:18px;background:rgba(229,48,50,.15);border:1px solid rgba(229,48,50,.5);color:#fecaca;font-size:24px;font-weight:700">⚠️ Visible to 400+ people you've never met</div></div>`);
+    fadeUp(group, A * 0.45, 0.7);
+    const mem = document.getElementById("mem");
+    [["Ali R.", "+60 12-381 4402"], ["Kumar S.", "+60 17-552 0198"], ["Lim J.H.", "+60 11-2093 6671"], ["Farid H.", "+60 19-774 3015"]].forEach(([n, p], i) => {
+      const row = el(`<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:24px">
+        <span style="display:flex;gap:14px;align-items:center"><span style="width:44px;height:44px;border-radius:50%;background:#333;display:grid;place-items:center;font-size:18px;font-weight:700">${n[0]}</span>${n}</span>
+        <span class="num" style="font-variant-numeric:tabular-nums;color:#e5e5e5">${p}</span></div>`, "", mem);
+      fadeUp(row, A * 0.5 + i * 0.25, 0.4, 14);
+      row.querySelector(".num").animate([{ color: "#e5e5e5", background: "transparent" }, { color: "#fff", background: "rgba(229,48,50,.55)" }],
+        { delay: (A * 0.72 + i * 0.12) * 1000, duration: 300, fill: "forwards" });
+    });
+    fadeUp(document.getElementById("warn"), A * 0.78, 0.5, 16);
+    caption(text);
+  },
+
+  p5({ A, text }) {
+    stage("dark", ["01", "The problem"]);
+    head(`Wildlife warnings arrive too late`, 0.15);
+    const forest = el(`<svg class="abs" style="left:0;bottom:150px" width="1920" height="520" viewBox="0 0 1920 520"></svg>`);
+    for (let i = 0; i < 22; i++) {
+      const x = i * 92 - 20, h = 260 + ((i * 37) % 6) * 40;
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.innerHTML = `<rect x="${x + 38}" y="${520 - 60}" width="16" height="60" fill="#2b2b2b"/><path d="M${x} ${520 - 50} L${x + 46} ${520 - h} L${x + 92} ${520 - 50} Z" fill="${i % 2 ? "#163a28" : "#1c4a33"}"/>`;
+      forest.appendChild(g);
+      anim(g, [{ transform: "translateY(520px)" }, { transform: "none" }], 0.2 + (i % 11) * 0.05, 0.8);
+    }
+    const monkey = el(`<div class="abs emoji" style="left:520px;top:520px;font-size:150px">🐒</div>`);
+    anim(monkey, [{ opacity: 0, transform: "translate(-120px,80px) rotate(-20deg)" }, { opacity: 1, transform: "none" }], A * 0.22, 0.7, POP);
+    const snake = el(`<div class="abs emoji" style="left:980px;top:640px;font-size:130px">🐍</div>`);
+    anim(snake, [{ opacity: 0, transform: "translateX(160px)" }, { opacity: 1, transform: "none" }], A * 0.38, 0.8);
+    const alert = el(`<div class="abs card" style="left:1180px;top:300px;width:600px;padding:26px 30px;display:flex;gap:20px;align-items:center;background:#262626">
+      <div class="emoji" style="font-size:60px">⏰</div><div><div style="font-size:28px;font-weight:800">Monkeys near Block B</div>
+      <div style="font-size:22px;color:#fca5a5;font-weight:600">Warning received 3 hours later</div></div></div>`);
+    anim(alert, [{ opacity: 0, transform: "translateY(-120px)" }, { opacity: 1, transform: "none" }], A * 0.68, 0.8, POP);
+    caption(text);
+  },
+
+  s1({ A, text }) {
+    stage("light", ["02", "The solution"]);
+    const wipe = el(`<div class="abs" style="left:50%;top:50%;width:10px;height:10px;margin:-5px;border-radius:50%;background:#121212"></div>`);
+    wipe.animate([{ transform: "scale(420)" }, { transform: "scale(0)" }], { duration: 900, easing: "cubic-bezier(.7,0,.3,1)", fill: "forwards" });
+    const logo = el(`<div class="abs" style="left:96px;top:170px">${LOGO(120)}</div>`);
+    popIn(logo, 0.6, 0.7);
+    const t = el(`<div class="abs" style="left:250px;top:168px;font-size:96px;font-weight:800;letter-spacing:-.03em">Meet Neighbourly</div>`);
+    fadeUp(t, 0.8, 0.8);
+    const sub = el(`<div class="abs muted" style="left:96px;top:330px;font-size:40px;font-weight:500">One <b style="color:var(--red)">private</b> app, for everyone who makes the township work</div>`);
+    fadeUp(sub, 1.2, 0.8);
+    const roles = [["🏠", "Verified residents", "Report issues, share food, book facilities"], ["🛍️", "Local shops", "Share end-of-day surplus with neighbours"], ["🏛️", "Township Management", "See every issue and act on real data"]];
+    roles.forEach(([e, title, desc], i) => {
+      const c = el(`<div class="abs card" style="left:${96 + i * 590}px;top:460px;width:550px;height:330px;padding:40px">
+        <div class="emoji" style="width:96px;height:96px;border-radius:26px;background:${["#fee2e2", "#fef3c7", "#e0f2fe"][i]};display:grid;place-items:center;font-size:54px">${e}</div>
+        <div style="font-size:38px;font-weight:800;margin-top:26px">${title}</div><div class="muted" style="font-size:26px;margin-top:8px;line-height:1.35">${desc}</div></div>`);
+      fadeUp(c, A * 0.42 + i * 0.35, 0.7);
+    });
+    caption(text, 0.7);
+  },
+
+  s2({ A, text }) {
+    stage("light", ["02", "The solution"]);
+    head(`Everything the township needs,<br><span style="color:var(--red)">in one app</span>`, 0.1, "font-size:70px");
+    const phone = el(`<div class="abs" style="left:1420px;top:90px;width:270px;height:540px;border-radius:48px;background:#121212;padding:12px;box-shadow:0 40px 80px -30px rgba(18,18,18,.55)">
+      <div style="width:100%;height:100%;border-radius:38px;background:linear-gradient(160deg,#fff5f5,#fff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px">
+      ${LOGO(100)}<div style="font-size:30px;font-weight:800">Neighbourly</div><div class="muted" style="font-size:19px">City of Elmina</div></div></div>`);
+    anim(phone, [{ opacity: 0, transform: "translateY(60px) rotate(6deg)" }, { opacity: 1, transform: "rotate(4deg)" }], 0.2, 0.9, POP);
+    const mods = [
+      ["🛠️", "TownCare", "Complaints become tracked reports", "#fee2e2"],
+      ["🥐", "EcoFood", "Surplus food, rescued", "#fef3c7"],
+      ["📅", "Facilities", "Book a hall or BBQ pit in seconds", "#e0f2fe"],
+      ["🎉", "Events", "Join what's on nearby", "#ede9fe"],
+      ["📍", "Places", "Every facility and shop on one map", "#dcfce7"],
+    ];
+    // Timed to the narration: each card appears as it's mentioned.
+    const times = [0.03, 0.2, 0.37, 0.6, 0.78];
+    mods.forEach(([e, name, desc, bg], i) => {
+      const card = el(`<div class="abs card" style="left:${87 + i * 354}px;top:690px;width:330px;height:190px;padding:26px 26px">
+        <div style="display:flex;gap:16px;align-items:center"><div class="emoji" style="flex:none;width:72px;height:72px;border-radius:22px;background:${bg};display:grid;place-items:center;font-size:40px">${e}</div>
+        <div style="font-size:32px;font-weight:800">${name}</div></div><div class="muted" style="font-size:24px;line-height:1.3;margin-top:16px">${desc}</div></div>`);
+      anim(card, [{ opacity: 0, transform: "translateY(50px) scale(.9)" }, { opacity: 1, transform: "none" }], A * times[i] + 0.2, 0.6, POP);
+    });
+    caption(text, 0.3);
+  },
+
+  s3({ A, text }) {
+    stage("light", ["02", "The solution"]);
+    head(`Answers for residents.<br><span style="color:var(--red)">Data for management.</span>`, 0.1, "font-size:68px");
+    const chat = el(`<div class="abs card" style="left:96px;top:380px;width:820px;padding:34px;display:flex;flex-direction:column;gap:18px"></div>`);
+    fadeUp(chat, 0.3, 0.6);
+    const q = el(`<div style="align-self:flex-end;background:#d71920;color:#fff;padding:16px 24px;border-radius:22px 22px 6px 22px;font-size:28px;font-weight:600">Macam mana nak tempah dewan?</div>`, "", chat);
+    fadeUp(q, 0.6, 0.5, 16);
+    const a = el(`<div style="align-self:flex-start;max-width:680px;background:#f5f5f5;padding:20px 26px;border-radius:22px 22px 22px 6px;font-size:25px;line-height:1.45">
+      <div style="font-weight:800;color:var(--red);font-size:20px;letter-spacing:.06em">✦ NEIGHBOURLY ASSISTANT</div>
+      1. Open <b>Facilities</b> → <b>Check availability</b><br>2. Pick a date and a free slot<br>3. Tap <b>Request booking</b> ✓</div>`, "", chat);
+    fadeUp(a, A * 0.22, 0.6, 16);
+    const dash = el(`<div class="abs card" style="left:1000px;top:380px;width:820px;padding:34px"></div>`);
+    fadeUp(dash, A * 0.48, 0.6);
+    el(`<div style="display:flex;gap:18px">${[["Open reports", "6", ""], ["Avg. time to fix", "1.9", " days"], ["Food saved", "42.5", " kg"]].map(([l, v, u], i) =>
+      `<div style="flex:1;padding:18px 20px;border:1px solid var(--line);border-radius:18px"><div class="muted" style="font-size:19px;font-weight:600">${l}</div><div style="font-size:44px;font-weight:800"><span class="kpi" data-v="${v}">0</span><span style="font-size:24px">${u}</span></div></div>`).join("")}</div>`, "", dash);
+    const bars = el(`<div style="display:flex;align-items:flex-end;gap:16px;height:230px;margin-top:26px;border-bottom:2px solid var(--line)"></div>`, "", dash);
+    [0.45, 0.62, 0.38, 0.8, 0.55, 0.92, 0.7, 0.6].forEach((h, i) => {
+      const b = el(`<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:3px;transform-origin:bottom"></div>`, "", bars);
+      [["#1baf7a", 0.3], ["#eb6834", 0.3], ["#2a78d6", 0.4]].forEach(([c, part], k) => {
+        el(`<div style="background:${c};height:${h * part * 100}%;border-radius:${k === 0 ? "6px 6px 0 0" : "0"}"></div>`, "", b);
+      });
+      anim(b, [{ transform: "scaleY(0)" }, { transform: "scaleY(1)" }], A * 0.52 + i * 0.08, 0.6);
+    });
+    dash.querySelectorAll(".kpi").forEach((k) => {
+      const v = Number(k.dataset.v);
+      counter(k, 0, v, A * 0.52, 1.2, (x) => (v % 1 ? x.toFixed(1) : String(Math.round(x))));
+    });
+    caption(text, 0.3);
+  },
+
+  s4({ A, text }) {
+    stage("light", ["02", "The solution"]);
+    head(`Privacy by design`, 0.1);
+    const card = el(`<div class="abs card" style="left:96px;top:300px;width:1000px;padding:40px 44px">
+      <div style="display:flex;gap:16px;align-items:center"><span style="padding:8px 16px;border-radius:999px;background:#fef3c7;color:#92400e;font-size:22px;font-weight:700">● Open</span><span style="padding:8px 16px;border-radius:999px;background:#f5f5f5;font-size:22px;font-weight:700">🚧 Roads</span></div>
+      <div style="font-size:42px;font-weight:800;margin-top:18px">Deep pothole outside the Block C guardhouse</div>
+      <div style="display:flex;gap:18px;align-items:center;margin-top:26px;height:72px">
+        <div style="position:relative;width:64px;height:64px;flex:none"><div id="av" style="position:absolute;inset:0;border-radius:50%;background:#fee2e2;color:#8f1418;display:grid;place-items:center;font-weight:800;font-size:26px">AR</div>
+        <div id="av2" class="emoji" style="position:absolute;inset:0;border-radius:50%;background:#e5e5e5;display:grid;place-items:center;font-size:30px">🏠</div></div>
+        <div style="position:relative;font-size:28px;font-weight:700;height:44px;width:860px;white-space:nowrap">
+          <span id="real" style="position:absolute;left:0;top:0">Ali Rahman · 012-381 4402</span>
+          <span id="anon" style="position:absolute;left:0;top:0;color:var(--ink)">Resident in Block C · Elmina Valley <span style="font-size:22px;padding:6px 12px;border-radius:999px;background:#f5f5f5;color:#525252;font-weight:600;vertical-align:middle">👁️‍🗨️ Anonymous to neighbours</span></span>
+        </div></div></div>`);
+    fadeUp(card, 0.2, 0.7);
+    const real = document.getElementById("real"), anon = document.getElementById("anon");
+    anim(real, [{ opacity: 1, filter: "blur(0)" }, { opacity: 0, filter: "blur(8px)" }], A * 0.3, 0.6);
+    anim(anon, [{ opacity: 0, transform: "translateY(20px)" }, { opacity: 1, transform: "none" }], A * 0.3 + 0.4, 0.6);
+    anim(document.getElementById("av2"), [{ opacity: 0 }, { opacity: 1 }], A * 0.3, 0.6);
+    const items = [["🔒", "Phone & email", "Only you and Township Management"], ["🏠", "Unit number", "Never shown to neighbours"], ["📍", "Photo location", "Removed before upload"], ["📅", "Bookings", "Slots shown as taken, no names"]];
+    items.forEach(([e, t, d], i) => {
+      const c = el(`<div class="abs card" style="left:1180px;top:${300 + i * 150}px;width:640px;padding:24px 30px;display:flex;gap:22px;align-items:center">
+        <div class="emoji" style="flex:none;width:76px;height:76px;border-radius:22px;background:#fff5f5;display:grid;place-items:center;font-size:40px">${e}</div>
+        <div><div style="font-size:30px;font-weight:800">${t}</div><div class="muted" style="font-size:23px">${d}</div></div></div>`);
+      fadeUp(c, A * 0.5 + i * 0.28, 0.6, 24);
+    });
+    caption(text, 0.3);
+  },
+
+  outro({ A, D }) {
+    stage("light");
+    const logo = el(`<div class="abs" style="left:50%;top:180px;margin-left:-75px">${LOGO(150)}</div>`);
+    popIn(logo, 0.1, 0.8);
+    const t = el(`<div class="abs" style="left:0;right:0;top:360px;text-align:center;font-size:104px;font-weight:800;letter-spacing:-.03em">Good neighbours, <span style="color:var(--red)">verified.</span></div>`);
+    fadeUp(t, 0.5, 0.9);
+    const pills = el(`<div class="abs" style="left:0;right:0;top:530px;display:flex;justify-content:center;gap:22px"></div>`);
+    [["🛡️", "Safer"], ["🌿", "Greener"], ["🤝", "More connected"]].forEach(([e, w], i) => {
+      const p = el(`<div style="display:flex;gap:14px;align-items:center;padding:18px 34px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:34px;font-weight:700;box-shadow:0 10px 30px -15px rgba(0,0,0,.25)"><span class="emoji">${e}</span>${w}</div>`, "", pills);
+      popIn(p, 1.4 + i * 0.35, 0.6);
+    });
+    const fine = el(`<div class="abs muted" style="left:0;right:0;top:720px;text-align:center;font-size:24px;line-height:1.7">
+      Neighbourly · Sime Darby Property University Hackathon 2026 · People track<br>
+      Prototype with sample data. Not an official Sime Darby Property app.</div>`);
+    fadeIn(fine, 3.0, 0.8);
+    const credits = el(`<div class="abs" style="left:0;right:0;top:880px;text-align:center;font-size:18px;line-height:1.7;color:#a3a3a3">
+      Photos: Wikimedia Commons (Wiki Farazi CC0, Chongkian CC BY-SA 4.0, Shixart1985 CC BY 2.0, Apetrov09703 CC BY-SA 4.0, Breather CC0, Роман Рябенко CC0)<br>
+      Maps © OpenStreetMap contributors · Weather by Open-Meteo (CC BY 4.0) · Food waste figure: SWCorp · Narration: AI-generated voice (Fish Audio)</div>`);
+    fadeIn(credits, 3.6, 0.8);
+    const black = el(`<div class="abs" style="inset:0;background:#000"></div>`);
+    anim(black, [{ opacity: 0 }, { opacity: 1 }], D - 1.2, 1.1, "linear");
+  },
+};
+
+/** Called by the recorder: builds the scene with its timings, ready to play from t = 0. */
+window.setup = ({ id, A, D, text }) => {
+  document.getAnimations().forEach((a) => a.cancel());
+  COUNTERS.length = 0;
+  SCENES[id]({ A, D, text });
+  document.getAnimations().forEach((a) => a.pause());
+  window.__anims = document.getAnimations();
+};
+window.play = () => {
+  (window.__anims || []).forEach((a) => a.play());
+  const t0 = performance.now();
+  (function loop(now) {
+    updateCounters((now - t0) / 1000);
+    requestAnimationFrame(loop);
+  })(t0);
+};
+/** For still previews: jump every animation to `t` seconds. */
+window.seek = (t) => {
+  (window.__anims || document.getAnimations()).forEach((a) => { a.pause(); a.currentTime = t * 1000; });
+  updateCounters(t);
+};
+</script>
+</body>
+</html>

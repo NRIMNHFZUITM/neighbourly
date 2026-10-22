@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.vite/
+coverage/
+test-results/
+playwright-report/
+screenshots/
+/video/
+*.log
+*.tsbuildinfo
+.DS_Store
+
+# Secrets: only the .example files are committed
+.env
+.env.*
+!.env.example
+
+# Playwright failure screenshots
+demo-flow-failure.png

@@ -1,0 +1,41 @@
+{
+  "name": "neighbourly",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Neighbourly: a private, verified community app for City of Elmina",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "npm run kb:build && concurrently -k -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:web": "npm run dev -w @neighbourly/web",
+    "dev:api": "npm run dev -w @neighbourly/api",
+    "kb:build": "tsx scripts/build-kb.ts",
+    "lint": "eslint .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run kb:build && npm run build --workspaces --if-present",
+    "screenshots": "tsx scripts/screenshots.ts",
+    "e2e": "tsx scripts/demo-flow.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^24.19.2",
+    "concurrently": "^10.0.6",
+    "eslint": "^10.13.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
+    "playwright": "^1.64.1",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.2",
+    "vitest": "^5.0.5"
+  }
+}

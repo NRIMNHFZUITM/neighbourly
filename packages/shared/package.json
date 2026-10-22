@@ -1,0 +1,17 @@
+{
+  "name": "@neighbourly/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Zod contracts, privacy presenters and domain helpers shared by the web app and the API",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  }
+}

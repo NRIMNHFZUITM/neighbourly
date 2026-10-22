@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Sime Darby Property colours: heritage red as the primary, warm yellow as the accent,
+     charcoal ink on neutral greys. Colours only; the SDP logo is never used. */
+  --color-brand-50: #fff5f5;
+  --color-brand-100: #ffe8e8;
+  --color-brand-200: #fdd0d0;
+  --color-brand-300: #faa9aa;
+  --color-brand-400: #f47677;
+  --color-brand-500: #ec4547;
+  --color-brand-600: #e53032;
+  --color-brand-700: #d71920;
+  --color-brand-800: #b3141a;
+  --color-brand-900: #8f1418;
+  --color-brand-950: #4f0a0c;
+
+  --color-accent-50: #fff9eb;
+  --color-accent-100: #fef0c7;
+  --color-accent-200: #fde08a;
+  --color-accent-300: #fbcb4d;
+  --color-accent-400: #f6a909;
+  --color-accent-500: #dd8f02;
+  --color-accent-600: #b86e00;
+  --color-accent-700: #925404;
+  --color-accent-800: #78450a;
+  --color-accent-900: #663a0d;
+
+  --color-ink: #121212;
+
+  --shadow-card: 0 1px 2px rgb(18 18 18 / 0.04), 0 1px 3px rgb(18 18 18 / 0.07);
+  --shadow-float: 0 12px 32px -12px rgb(143 20 24 / 0.45);
+
+  --animate-slide-up: slide-up 0.22s ease-out;
+  --animate-fade-in: fade-in 0.18s ease-out;
+  --animate-slide-in-right: slide-in-right 0.24s ease-out;
+
+  @keyframes slide-up {
+    from {
+      transform: translateY(16px);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes slide-in-right {
+    from {
+      transform: translateX(32px);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-neutral-50 text-ink antialiased;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* Leaflet: inherit the app font and keep its internal z-indexes below our overlays */
+.leaflet-container {
+  font-family: inherit;
+  background: #ebebeb;
+}
+.leaflet-control-attribution {
+  font-size: 10px;
+}
+
+/* Map pins (Leaflet divIcon) */
+.nb-pin-wrap {
+  background: none;
+  border: none;
+}
+.nb-pin {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  border: 3px solid #fff;
+  box-shadow: 0 6px 14px -4px rgb(0 0 0 / 0.45);
+  background: var(--pin, #d71920);
+  transition: transform 0.15s ease;
+}
+.nb-pin > span {
+  transform: rotate(45deg);
+  font-size: 15px;
+  line-height: 1;
+}
+.nb-pin[data-active="true"] {
+  transform: rotate(-45deg) scale(1.2);
+}
+
+/* Markdown answers from the assistant */
+.nb-md {
+  overflow-wrap: anywhere;
+}
+.nb-md p {
+  margin: 0.45em 0;
+}
+.nb-md > :first-child {
+  margin-top: 0;
+}
+.nb-md > :last-child {
+  margin-bottom: 0;
+}
+.nb-md ul {
+  list-style: disc;
+  padding-left: 1.25em;
+  margin: 0.45em 0;
+}
+.nb-md ol {
+  list-style: decimal;
+  padding-left: 1.35em;
+  margin: 0.45em 0;
+}
+.nb-md li {
+  margin: 0.2em 0;
+}
+.nb-md strong {
+  font-weight: 650;
+}
+.nb-md a {
+  color: var(--color-brand-700);
+  text-decoration: underline;
+}
+
+/* Striped background for maintenance slots */
+.nb-stripes {
+  background-image: repeating-linear-gradient(-45deg, rgb(0 0 0 / 0.05) 0 6px, transparent 6px 12px);
+}

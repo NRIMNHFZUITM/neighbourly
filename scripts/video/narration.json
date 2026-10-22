@@ -1,0 +1,31 @@
+[
+  { "id": "intro", "text": "Neighbourly. A smarter, safer and greener City of Elmina." },
+
+  { "id": "p1", "text": "City of Elmina is home to thousands of families. But a growing township brings everyday frustrations." },
+  { "id": "p2", "text": "When a streetlight breaks or a pothole appears, residents complain in scattered chat groups and phone calls. Nobody knows if it's being fixed, and management never sees the full picture." },
+  { "id": "p3", "text": "Malaysia throws away around seventeen thousand tonnes of food every day, while good surplus from homes and shops ends up in the bin." },
+  { "id": "p4", "text": "Booking the community hall still means phone calls and paper forms. Neighbours rarely know each other, and open chat groups expose phone numbers to strangers." },
+  { "id": "p5", "text": "And living next to green forest means monkeys and snakes, with warnings that often arrive too late." },
+
+  { "id": "s1", "text": "Meet Neighbourly: one private app for verified residents, local shops and Township Management." },
+  { "id": "s2", "text": "TownCare turns complaints into tracked reports. EcoFood rescues surplus food. Residents book facilities in seconds, join community events, and find every place on one map." },
+  { "id": "s3", "text": "An assistant answers questions in English and Malay, and a live dashboard gives Township Management the data to act." },
+  { "id": "s4", "text": "And privacy comes first. Neighbours see Resident in Block C, never your name, number or address, unless you choose to share it." },
+
+  { "id": "d1", "text": "Here's the app. It follows Sime Darby Property's colours: heritage red and warm yellow, on clean, neutral greys.", "spoken": "Here's the app. It follows Saim Dahbee Property's colours: heritage red and warm yellow, on clean, neutral greys." },
+  { "id": "d2", "text": "On a computer, everything sits in one sidebar. On a phone, the five things residents use most are in the bottom bar." },
+  { "id": "d3", "text": "Home is deliberately calm: today's weather, the newest safety alert, what needs your attention, and what's coming up next." },
+
+  { "id": "w1", "text": "Ali spots a pothole. In TownCare he adds a photo, picks a category and drops a pin on the map. Hidden location data is removed from the photo automatically.", "spoken": "Alee spots a pothole. In TownCare he adds a photo, picks a category and drops a pin on the map. Hidden location data is removed from the photo automatically." },
+  { "id": "w2", "text": "His report stays anonymous to neighbours, and he can follow it in My reports and on the township map." },
+  { "id": "w3", "text": "Township Management sees it straight away, assigns the Roads and Drainage team, and marks it resolved. Ali is notified at every step.", "spoken": "Township Management sees it straight away, assigns the Roads and Drainage team, and marks it resolved. Alee is notified at every step." },
+  { "id": "w4", "text": "With EcoFood, neighbours and local shops share surplus food. Daniel confirms a request, and both of them see a four digit pickup code, so nobody has to swap phone numbers." },
+  { "id": "w5", "text": "Booking a facility takes seconds. Free slots are clear, but nobody can see who booked the others." },
+  { "id": "w6", "text": "In Community, residents filter the feed by topic, say they're going to events, and meet neighbours who chose to be listed." },
+  { "id": "w7", "text": "The Places map pins every facility and verified local shop, with directions one tap away." },
+  { "id": "w8", "text": "The assistant explains any feature step by step, and politely declines anything that isn't about Neighbourly." },
+  { "id": "w9", "text": "For Township Management, the dashboard turns all of this into decisions: open reports, time to fix, wildlife sightings and food saved, each with a table view." },
+  { "id": "w10", "text": "And everything works just as well on a phone: report a problem, share food, or ask the assistant, wherever you are." },
+
+  { "id": "outro", "text": "Neighbourly. Good neighbours, verified. Helping City of Elmina become safer, greener and more connected." }
+]
