@@ -4,6 +4,8 @@ A private, verified community app for a smarter township. Residents report towns
 
 Built for the **Sime Darby Property University Hackathon 2026** (People track). This is the **clickable prototype stage**: every screen works on realistic sample data for City of Elmina, and the assistant is real. The full plan is in [Neighbourly_Project_Plan.md](Neighbourly_Project_Plan.md).
 
+**Try it online: [neighbourly-elmina.vercel.app](https://neighbourly-elmina.vercel.app)**. Pick a demo account on the sign-in page; no password needed. Works on computers and phones. Each visitor gets their own copy of the sample data in their browser, and the online assistant answers from the township guide (AI answers need the API server; see below).
+
 > Prototype notice: people, shops, reports, bookings, opening hours and rules are sample content. Neighbourhood, park, mall and street names are real places from OpenStreetMap. This is not an official Sime Darby Property app.
 
 ## Quick start
