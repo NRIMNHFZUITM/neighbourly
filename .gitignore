@@ -17,3 +17,6 @@ screenshots/
 
 # Playwright failure screenshots
 demo-flow-failure.png
+
+# Vercel build output (npm run build:vercel)
+.vercel/

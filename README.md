@@ -4,7 +4,7 @@ A private, verified community app for a smarter township. Residents report towns
 
 Built for the **Sime Darby Property University Hackathon 2026** (People track). This is the **clickable prototype stage**: every screen works on realistic sample data for City of Elmina, and the assistant is real. The full plan is in [Neighbourly_Project_Plan.md](Neighbourly_Project_Plan.md).
 
-**Try it online: [neighbourly-elmina.vercel.app](https://neighbourly-elmina.vercel.app)**. Pick a demo account on the sign-in page; no password needed. Works on computers and phones. Each visitor gets their own copy of the sample data in their browser, and the online assistant answers from the township guide (AI answers need the API server; see below).
+**Try it online: [neighbourly-elmina.vercel.app](https://neighbourly-elmina.vercel.app)**. Pick a demo account on the sign-in page; no password needed. Works on computers and phones. Each visitor gets their own copy of the sample data in their browser. The online assistant uses AI when the Vercel project has an `OPENAI_API_KEY`, and otherwise answers from the township guide.
 
 > Prototype notice: people, shops, reports, bookings, opening hours and rules are sample content. Neighbourhood, park, mall and street names are real places from OpenStreetMap. This is not an official Sime Darby Property app.
 
@@ -37,6 +37,16 @@ Without a key, the assistant answers straight from the township guide ("Guide on
 3. Restart `npm run dev`. `GET /api/health` shows the provider and models, and the assistant's badge changes to "AI".
 
 The key stays on the server. The browser only ever calls `POST /api/chat`, and `.env` is git-ignored.
+
+### Deploying (Vercel)
+
+`vercel.json` runs `npm run build:vercel`, which builds the web app and bundles the API into one Node function (`scripts/build-vercel.ts`, Vercel Build Output v3). Vercel serves the web app as static files and sends `/api/*` (the assistant and weather) to the function; every other `/api` call is answered by the sample-data API in the browser.
+
+1. Import the GitHub repo in Vercel with **Application Preset: Other** and the root directory `./`.
+2. For AI answers, add `OPENAI_API_KEY` (or `OPENROUTER_API_KEY`) under **Settings → Environment Variables**, then redeploy. Without a key the assistant answers from the guide.
+3. Set a monthly spending limit with your model provider: anyone with the link can use the assistant. Rate limits are per visitor (`CHAT_RATE_LIMIT`, default 20 per 5 minutes) but counted per server instance.
+
+Every push to `main` redeploys. `GET /api/health` on the live site shows whether the assistant is in AI or guide-only mode.
 
 ## Demo script (about 5 minutes)
 

@@ -21,6 +21,8 @@ export interface Env {
   chatRateLimit: number;
   /** Give up on a model (and try the next) if it hasn't produced text by then. */
   firstTokenTimeoutMs: number;
+  /** Behind a proxy (Vercel), take the client IP from X-Forwarded-For so rate limits are per person. */
+  trustProxy: boolean;
   logLevel: string;
 }
 
@@ -55,6 +57,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
     maxOutputTokens: int(source.CHAT_MAX_OUTPUT_TOKENS, 600),
     chatRateLimit: int(source.CHAT_RATE_LIMIT, 20),
     firstTokenTimeoutMs: int(source.CHAT_FIRST_TOKEN_TIMEOUT_MS, 15_000),
+    trustProxy: source.VERCEL === "1" || source.TRUST_PROXY === "true",
     logLevel: source.LOG_LEVEL ?? "info",
   };
 }

@@ -14,6 +14,8 @@ export default defineConfig(
     "apps/web/public/mockServiceWorker.js",
     "packages/shared/src/kb/kb.generated.ts",
     "screenshots/**",
+    ".vercel/**",
+    "video/**",
   ]),
   js.configs.recommended,
   tseslint.configs.recommended,
